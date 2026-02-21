@@ -438,6 +438,19 @@
 	gap: 0.45rem;
 }
 
+@media (max-width: 680px) {
+	.store-item-card,
+	.inventory-item-card {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.store-item-actions,
+	.inventory-item-actions {
+		justify-content: flex-start;
+		align-items: flex-start;
+	}
+}
+
 .tag-list {
 	display: flex;
 	flex-wrap: wrap;
