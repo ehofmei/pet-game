@@ -1,0 +1,9 @@
+root = true
+
+[*.{ts,tsx,js,jsx,css}]
+indent_style = tab
+indent_size = 4
+
+[*.json]
+indent_style = tab
+indent_size = 4
