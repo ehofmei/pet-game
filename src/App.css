@@ -451,6 +451,124 @@
 	}
 }
 
+.visual-card-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 0.75rem;
+}
+
+.visual-card-list-item {
+	margin: 0;
+}
+
+.image-info-card {
+	border: 1px solid #d2e9f8;
+	border-radius: 14px;
+	background: #fafdff;
+	overflow: hidden;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	height: 100%;
+}
+
+.image-info-card-media {
+	aspect-ratio: 3 / 4;
+	background: #e8f5ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	position: relative;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #3f7291;
+}
+
+.image-info-card-media img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.image-info-card-badges {
+	position: absolute;
+	top: 0.45rem;
+	left: 0.45rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	max-width: calc(100% - 0.9rem);
+}
+
+.image-info-card-badge {
+	display: inline-flex;
+	align-items: center;
+	background: #1f6ea3;
+	color: #ffffff;
+	border-radius: 999px;
+	padding: 0.15rem 0.45rem;
+	font-size: 0.7rem;
+	font-weight: 700;
+}
+
+.image-info-card-badge.is-secondary {
+	background: #1f8a62;
+}
+
+.image-info-card-body {
+	padding: 0.6rem 0.65rem 0.4rem;
+}
+
+.image-info-card-body h3 {
+	margin: 0;
+	color: #174c6f;
+	font-size: 1rem;
+}
+
+.image-info-card-subtitle {
+	margin: 0.2rem 0 0;
+	font-size: 0.82rem;
+	color: #3c6a87;
+}
+
+.image-info-card-content {
+	margin-top: 0.35rem;
+	display: grid;
+	gap: 0.25rem;
+}
+
+.image-info-card-content p {
+	margin: 0;
+	font-size: 0.82rem;
+	color: #345f7d;
+}
+
+.image-info-card-label {
+	font-size: 0.76rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: #25516f;
+}
+
+.image-info-card-footer {
+	padding: 0.5rem 0.65rem 0.65rem;
+	border-top: 1px dashed #c9e2f3;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0.45rem;
+	flex-wrap: wrap;
+}
+
+.image-info-card-footer .store-item-actions,
+.image-info-card-footer .inventory-item-actions {
+	width: 100%;
+}
+
 .tag-list {
 	display: flex;
 	flex-wrap: wrap;
@@ -503,6 +621,237 @@
 	padding-left: 1rem;
 	display: grid;
 	gap: 0.35rem;
+}
+
+.breed-helper-text {
+	margin: 0.35rem 0 0.6rem;
+	font-size: 0.85rem;
+	color: #35657f;
+}
+
+.breed-filter-grid,
+.breed-form-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 0.65rem;
+	margin-bottom: 0.85rem;
+}
+
+.breed-form {
+	display: grid;
+	gap: 0.7rem;
+}
+
+.breed-selection-tabs {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.55rem;
+}
+
+.breed-selection-tab {
+	border: 1px solid #a7d2ef;
+	border-radius: 12px;
+	background: #f4fbff;
+	color: #17547f;
+	padding: 0.5rem 0.55rem;
+	font-size: 0.82rem;
+	font-weight: 700;
+}
+
+.breed-selection-tab.is-active {
+	background: #1f6ea3;
+	border-color: #1f6ea3;
+	color: #ffffff;
+}
+
+.breed-selected-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 0.65rem;
+}
+
+.breed-selected-card {
+	border: 1px solid #cde5f6;
+	border-radius: 14px;
+	background: #fafdff;
+	padding: 0.65rem;
+}
+
+.breed-selected-card.is-target {
+	border-color: #1f6ea3;
+	box-shadow: 0 0 0 2px rgba(31, 110, 163, 0.15);
+}
+
+.breed-selected-title {
+	margin: 0;
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #27526f;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.breed-selected-photo {
+	margin-top: 0.45rem;
+	aspect-ratio: 3 / 4;
+	border-radius: 12px;
+	background: #e8f5ff;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #3f7291;
+}
+
+.breed-selected-photo img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.breed-selected-name {
+	margin: 0.45rem 0 0;
+	font-weight: 700;
+	color: #174c6f;
+}
+
+.breed-selected-meta {
+	margin: 0.2rem 0 0.45rem;
+	font-size: 0.85rem;
+	color: #355f7a;
+}
+
+.breed-selected-empty {
+	margin: 0.45rem 0 0;
+	font-size: 0.85rem;
+	color: #4d748d;
+}
+
+.breed-gallery {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 0.8rem;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 0.7rem;
+}
+
+.breed-pet-item {
+	margin: 0;
+}
+
+.breed-pet-card {
+	border: 1px solid #cde5f6;
+	border-radius: 14px;
+	background: #fafdff;
+	padding: 0;
+	width: 100%;
+	text-align: left;
+	overflow: hidden;
+}
+
+.breed-pet-card.is-selected {
+	border-color: #1f6ea3;
+	box-shadow: 0 0 0 2px rgba(31, 110, 163, 0.16);
+}
+
+.breed-pet-photo {
+	position: relative;
+	aspect-ratio: 3 / 4;
+	background: #e8f5ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #3f7291;
+}
+
+.breed-pet-photo img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.breed-pet-badge {
+	position: absolute;
+	top: 0.45rem;
+	left: 0.45rem;
+	background: #1f6ea3;
+	color: #ffffff;
+	border-radius: 999px;
+	padding: 0.12rem 0.42rem;
+	font-size: 0.68rem;
+	font-weight: 700;
+}
+
+.breed-pet-badge-b {
+	background: #1f8a62;
+}
+
+.breed-pet-meta {
+	padding: 0.55rem 0.55rem 0.65rem;
+}
+
+.breed-pet-name {
+	margin: 0;
+	font-size: 0.95rem;
+	font-weight: 700;
+	color: #174c6f;
+}
+
+.breed-pet-meta p {
+	margin: 0.2rem 0 0;
+	color: #355f7a;
+	font-size: 0.82rem;
+}
+
+.breed-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.breed-field span {
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #285471;
+}
+
+.breed-field input,
+.breed-field select {
+	border: 1px solid #b6d9ef;
+	border-radius: 10px;
+	padding: 0.45rem 0.55rem;
+	background: #fbfeff;
+	color: #164363;
+}
+
+.breed-field-toggle {
+	flex-direction: row;
+	align-items: center;
+}
+
+.breed-field-toggle input {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+}
+
+.breed-success {
+	margin-top: 0.85rem;
+	border: 1px solid #c8e5f8;
+	border-radius: 12px;
+	background: #f5fbff;
+	padding: 0.75rem;
+}
+
+.breed-success h3 {
+	margin: 0 0 0.4rem;
+	color: #184d70;
 }
 
 .pets-header-row {
@@ -569,6 +918,10 @@
 	margin: 0;
 	display: grid;
 	gap: 0.75rem;
+}
+
+.pets-card-list {
+	grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
 }
 
 .pets-item {

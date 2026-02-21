@@ -4,7 +4,7 @@ Offline-first, installable PWA for tracking a kid-made pet breeding card game.
 
 ## Current Status
 
-Phases 01-05 are implemented:
+Phases 01-06 are implemented:
 
 1. React + TypeScript + Vite scaffold
 2. PWA manifest and service worker via `vite-plugin-pwa`
@@ -13,6 +13,7 @@ Phases 01-05 are implemented:
 5. Store purchasing and wallet/inventory updates with transaction logs
 6. Profiles management with separate Admin tools tab
 7. In-app diagnostics panel for recent detailed error logs
+8. Breeding workflow with token/coin consumption fallback, baby creation, and event logging
 
 ## Development
 

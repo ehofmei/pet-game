@@ -15,7 +15,7 @@ This is a living user guide for using the app as a player/parent on one device.
 Add, view, edit, filter, and manage pets.
 
 2. `Breed`
-Breeding flow area (full behavior is phased in progressively).
+Select two parent pets, consume a breeding session, and create a baby pet.
 
 3. `Store`
 Browse and buy pets, supplies, and breeding session items.
@@ -94,6 +94,22 @@ In Pets list view you can filter by:
 	- item: inventory quantity increases
 6. If balance is too low, purchase is blocked.
 
+## Using Breed
+
+1. Open `Breed` tab.
+2. Optionally filter/select pets using search and species filter.
+3. Select `Parent A` and `Parent B`.
+4. Toggle `Allow cross-species breeding` on/off.
+5. Tap `Breed Pets`.
+6. Resource rules:
+	- If you have a breeding token in inventory, one is consumed.
+	- If not, app prompts to buy/use a breeding session item from Store pricing.
+7. Result:
+	- parent `breedCount` increments by 1 for each parent
+	- baby pet is created with default name/species/tags
+	- breeding event and transaction log are written
+8. On success, tap `Add Baby Photo Now` to jump directly to baby edit form.
+
 ## Using Inventory
 
 1. Open `Inventory` tab.
@@ -165,7 +181,6 @@ In Pets list view you can filter by:
 
 1. No cloud sync; data is per-device.
 2. No user authentication.
-3. Breeding flow is still being expanded by phase.
 
 ## Troubleshooting
 

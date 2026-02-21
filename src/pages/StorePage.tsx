@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ImageInfoCard } from '../components/ImageInfoCard'
 import { TagList } from '../components/TagList'
 import { useActiveProfile } from '../context/useActiveProfile'
 import { appDb, EconomyError, EconomyService, PhotoRepo, StoreRepo } from '../db'
@@ -223,42 +224,39 @@ export const StorePage = () => {
 
 			{!isLoadingData && filteredItems.length === 0 ? <p>No store items match current filters.</p> : null}
 			{filteredItems.length > 0 ? (
-				<ul className="store-item-list">
+				<ul className="visual-card-list store-card-list">
 					{filteredItems.map((item) => {
 						const affordable = canAfford(item)
 						const itemPhotoUrl = item.photoId ? photoUrls[item.photoId] : null
 						return (
-							<li className="store-item-card" key={item.id}>
-								<div className="store-item-main">
-									<div className="store-item-thumb">
-										{itemPhotoUrl ? <img src={itemPhotoUrl} alt={`${item.name} art`} /> : <span>No Photo</span>}
-									</div>
-									<div>
-										<h3>{item.name}</h3>
-										<p>{item.description}</p>
-										<p>
-											<strong>Type:</strong> {getStoreTypeLabel(item.type)}
-										</p>
-										<p>
-											<strong>Species:</strong> {item.speciesRestriction ?? 'none'}
-										</p>
-										<p>
-											<strong>Cost:</strong> {getPriceLabel(item)}
-										</p>
-										<TagList tags={item.tags} emptyLabel="No tags" />
-									</div>
-								</div>
-								<div className="store-item-actions">
-									<button
-										type="button"
-										onClick={() => handleBuy(item)}
-										disabled={!wallet || !affordable || isBuyingId === item.id}
-										aria-label={`Buy ${item.name}`}
-									>
-										{isBuyingId === item.id ? 'Buying...' : 'Buy'}
-									</button>
-									{!affordable ? <p className="store-error-mini">Insufficient balance</p> : null}
-								</div>
+							<li className="visual-card-list-item" key={item.id}>
+								<ImageInfoCard
+									title={item.name}
+									subtitle={`${getStoreTypeLabel(item.type)} | ${item.speciesRestriction ?? 'none'}`}
+									imageUrl={itemPhotoUrl}
+									imageAlt={`${item.name} art`}
+									badges={[{ label: getPriceLabel(item) }]}
+									content={
+										<>
+											<p>{item.description}</p>
+											<p className="image-info-card-label">Tags</p>
+											<TagList tags={item.tags} emptyLabel="No tags" />
+										</>
+									}
+									footer={
+										<div className="store-item-actions">
+											<button
+												type="button"
+												onClick={() => handleBuy(item)}
+												disabled={!wallet || !affordable || isBuyingId === item.id}
+												aria-label={`Buy ${item.name}`}
+											>
+												{isBuyingId === item.id ? 'Buying...' : 'Buy'}
+											</button>
+											{!affordable ? <p className="store-error-mini">Insufficient balance</p> : null}
+										</div>
+									}
+								/>
 							</li>
 						)
 					})}

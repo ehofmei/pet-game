@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ImageInfoCard } from '../components/ImageInfoCard'
 import { PetForm, type PetFormValues } from '../components/PetForm'
 import { TagList } from '../components/TagList'
 import { useActiveProfile } from '../context/useActiveProfile'
 import { appDb, BreedingRepo, PetRepo, PhotoRepo, type CreatePetInput } from '../db'
 import type { BreedingEvent, Pet, PetGender, PetSpecies } from '../models'
-import { logAppError } from '../utils'
+import { clearPetsEditIntent, getPetsEditIntent, logAppError } from '../utils'
 
 type PetsView = 'list' | 'create' | 'detail' | 'edit'
 type WildFilter = 'all' | 'wild' | 'adopted'
@@ -162,6 +163,24 @@ export const PetsPage = () => {
 			setSelectedPetId(null)
 		}
 	}, [selectedPetId, selectedPet])
+
+	useEffect(() => {
+		if (view !== 'list') {
+			return
+		}
+		const intentPetId = getPetsEditIntent()
+		if (!intentPetId) {
+			return
+		}
+		const intentPet = pets.find((pet) => pet.id === intentPetId)
+		if (!intentPet) {
+			return
+		}
+
+		setSelectedPetId(intentPet.id)
+		setView('edit')
+		clearPetsEditIntent()
+	}, [pets, view])
 
 	const filteredPets = useMemo(() => {
 		const loweredSearch = searchText.trim().toLowerCase()
@@ -556,38 +575,42 @@ export const PetsPage = () => {
 
 			{!isLoadingPets && filteredPets.length === 0 ? <p>No pets match current filters.</p> : null}
 			{filteredPets.length > 0 ? (
-				<ul className="pets-list">
+				<ul className="visual-card-list pets-card-list">
 					{filteredPets.map((pet) => {
 						const petPhotoUrl = pet.photoId ? photoUrls[pet.photoId] : null
 						return (
-							<li className="pets-item" key={pet.id}>
-								<div className="pets-thumb">
-									{petPhotoUrl ? <img src={petPhotoUrl} alt={`${pet.name} thumbnail`} /> : <span>No Photo</span>}
-								</div>
-								<div className="pets-item-meta">
-									<h3>{pet.name}</h3>
-									<p>
-										{pet.species} | {pet.gender}
-									</p>
-									<p>Breed Count: {pet.breedCount}</p>
-									<p>{pet.wasWild ? 'Was wild before adopted' : 'Raised from card start'}</p>
-									<div>
-										<p>Tags:</p>
-										<TagList tags={pet.tags} emptyLabel="No tags" />
-									</div>
-								</div>
-								<div className="pets-item-actions">
-									<button
-										type="button"
-										onClick={() => {
-											setSelectedPetId(pet.id)
-											setView('detail')
-										}}
-										aria-label={`View Details ${pet.name}`}
-									>
-										View Details
-									</button>
-								</div>
+							<li className="visual-card-list-item" key={pet.id}>
+								<ImageInfoCard
+									title={pet.name}
+									subtitle={`${pet.species} | ${pet.gender}`}
+									imageUrl={petPhotoUrl}
+									imageAlt={`${pet.name} card`}
+									badges={
+										pet.wasWild
+											? [{ label: 'Was Wild', tone: 'secondary' }]
+											: [{ label: 'Home Raised' }]
+									}
+									content={
+										<>
+											<p>Breed Count: {pet.breedCount}</p>
+											<p>{pet.wasWild ? 'Was wild before adopted' : 'Raised from card start'}</p>
+											<p className="image-info-card-label">Tags</p>
+											<TagList tags={pet.tags} emptyLabel="No tags" />
+										</>
+									}
+									footer={
+										<button
+											type="button"
+											onClick={() => {
+												setSelectedPetId(pet.id)
+												setView('detail')
+											}}
+											aria-label={`View Details ${pet.name}`}
+										>
+											View Details
+										</button>
+									}
+								/>
 							</li>
 						)
 					})}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { ImageInfoCard } from '../components/ImageInfoCard'
 import { TagList } from '../components/TagList'
 import { useActiveProfile } from '../context/useActiveProfile'
 import { appDb, EconomyError, EconomyService, InventoryRepo, PhotoRepo, StoreRepo, TransactionRepo } from '../db'
@@ -381,52 +382,46 @@ export const InventoryPage = () => {
 
 			{!isLoadingData && filteredRows.length === 0 ? <p>No inventory items match current filters.</p> : null}
 			{filteredRows.length > 0 ? (
-				<ul className="inventory-item-list">
+				<ul className="visual-card-list inventory-card-list">
 					{filteredRows.map((row) => {
 						const item = row.storeItem
 						const itemName = item?.name ?? `Unknown Item (${row.inventoryItem.itemId})`
 						const itemPhotoUrl = item?.photoId ? photoUrls[item.photoId] : null
 						return (
-							<li className="inventory-item-card" key={row.inventoryItem.id}>
-								<div className="store-item-main">
-									<div className="store-item-thumb">
-										{itemPhotoUrl ? <img src={itemPhotoUrl} alt={`${itemName} art`} /> : <span>No Photo</span>}
-									</div>
-									<div>
-										<h3>{itemName}</h3>
-										<p>
-											<strong>Quantity:</strong> {row.inventoryItem.quantity}
-										</p>
-										<p>
-											<strong>Type:</strong> {getInventoryTypeLabel(item?.type)}
-										</p>
-										<p>
-											<strong>Species:</strong> {item?.speciesRestriction ?? 'none'}
-										</p>
-										<p>
-											<strong>Tags:</strong>
-										</p>
-										<TagList tags={item?.tags ?? []} emptyLabel="No tags" />
-									</div>
-								</div>
-								<div className="inventory-item-actions">
-									<button
-										type="button"
-										onClick={() => handleAdjustInventory(row.inventoryItem.itemId, -1, itemName)}
-										disabled={row.inventoryItem.quantity <= 0 || isAdjustingItemId === row.inventoryItem.itemId}
-										aria-label={`Decrease ${itemName}`}
-									>
-										-1
-									</button>
-									<button
-										type="button"
-										onClick={() => handleAdjustInventory(row.inventoryItem.itemId, 1, itemName)}
-										disabled={isAdjustingItemId === row.inventoryItem.itemId}
-										aria-label={`Increase ${itemName}`}
-									>
-										+1
-									</button>
-								</div>
+							<li className="visual-card-list-item" key={row.inventoryItem.id}>
+								<ImageInfoCard
+									title={itemName}
+									subtitle={`${getInventoryTypeLabel(item?.type)} | ${item?.speciesRestriction ?? 'none'}`}
+									imageUrl={itemPhotoUrl}
+									imageAlt={`${itemName} art`}
+									badges={[{ label: `Qty: ${row.inventoryItem.quantity}` }]}
+									content={
+										<>
+											<p className="image-info-card-label">Tags</p>
+											<TagList tags={item?.tags ?? []} emptyLabel="No tags" />
+										</>
+									}
+									footer={
+										<div className="inventory-item-actions">
+											<button
+												type="button"
+												onClick={() => handleAdjustInventory(row.inventoryItem.itemId, -1, itemName)}
+												disabled={row.inventoryItem.quantity <= 0 || isAdjustingItemId === row.inventoryItem.itemId}
+												aria-label={`Decrease ${itemName}`}
+											>
+												-1
+											</button>
+											<button
+												type="button"
+												onClick={() => handleAdjustInventory(row.inventoryItem.itemId, 1, itemName)}
+												disabled={isAdjustingItemId === row.inventoryItem.itemId}
+												aria-label={`Increase ${itemName}`}
+											>
+												+1
+											</button>
+										</div>
+									}
+								/>
 							</li>
 						)
 					})}
