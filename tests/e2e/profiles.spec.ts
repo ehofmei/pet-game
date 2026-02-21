@@ -5,7 +5,7 @@ test.describe('Profiles management', () => {
 		await page.goto('/#/profiles')
 
 		await expect(page.getByRole('heading', { level: 2, name: 'Profiles' })).toBeVisible()
-		await expect(page.getByText('Family')).toBeVisible()
+		await expect(page.getByRole('heading', { level: 3, name: 'Family' })).toBeVisible()
 
 		await page.getByPlaceholder('New profile name').fill('Kid')
 		await page.getByRole('button', { name: 'Add Profile' }).click()

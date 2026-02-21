@@ -18,8 +18,10 @@
 	- Prominent balances in Inventory page.
 	- Parent adjustment form with reason note.
 	- Write `TransactionLog` entry for adjustment.
-5. Build Admin add StoreItem UI:
-	- Form in Profiles/settings area.
+5. Build Admin tools UI:
+	- Dedicated Admin tab.
+	- Store item add/edit/delete form.
+	- Wallet adjustments and diagnostics visibility.
 	- Optional photo upload (Photo table reference).
 	- Persist with generated stable id and defaults.
 
@@ -35,3 +37,8 @@
 1. Economy mechanics are functional and consistent.
 2. Inventory quantities and wallet balances remain accurate.
 3. Admin can add custom store items locally.
+
+## Build Status
+
+1. Completed.
+2. Verification performed with lint, unit/integration tests, e2e tests, and production build.

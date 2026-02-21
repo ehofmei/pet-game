@@ -15,6 +15,7 @@ Complete backup/restore, run acceptance validation, and finalize deployment/inst
 3. PWA/offline polish:
 	- Verify install prompts and offline behavior.
 	- Improve loading/error states.
+	- Validate diagnostics/error-log visibility for troubleshooting.
 4. QA pass against acceptance checklist.
 5. Document local dev and free-host deployment path (GitHub Pages).
 

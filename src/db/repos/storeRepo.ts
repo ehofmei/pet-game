@@ -19,7 +19,7 @@ export class StoreRepo {
 	}
 
 	async listAll(): Promise<StoreItem[]> {
-		return await this.db.storeItems.orderBy('name').toArray()
+		return await this.db.storeItems.toCollection().sortBy('name')
 	}
 
 	async getById(id: string): Promise<StoreItem | undefined> {
@@ -48,5 +48,9 @@ export class StoreRepo {
 				updatedAt: timestamp,
 			})),
 		)
+	}
+
+	async deleteById(id: string): Promise<void> {
+		await this.db.storeItems.delete(id)
 	}
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useActiveProfile } from '../context/useActiveProfile'
+import { logAppError } from '../utils'
 
 export const ProfilesPage = () => {
 	const { profiles, activeProfileId, isLoading, error, selectProfile, createProfile, renameProfile, deleteProfile } =
@@ -25,7 +26,7 @@ export const ProfilesPage = () => {
 			await createProfile(newProfileName)
 			setNewProfileName('')
 		} catch (err: unknown) {
-			console.error('Failed to create profile', err)
+			logAppError('ProfilesPage.handleCreateProfile', err)
 			setMutationError('Failed to create profile. Try again.')
 		}
 	}
@@ -36,7 +37,11 @@ export const ProfilesPage = () => {
 			setMutationError(null)
 			await renameProfile(profileId, draftName)
 		} catch (err: unknown) {
-			console.error('Failed to rename profile', err)
+			logAppError('ProfilesPage.handleRenameProfile', err, {
+				metadata: {
+					profileId,
+				},
+			})
 			setMutationError('Failed to rename profile. Try again.')
 		}
 	}
@@ -56,7 +61,11 @@ export const ProfilesPage = () => {
 			setMutationError(null)
 			await deleteProfile(profileId)
 		} catch (err: unknown) {
-			console.error('Failed to delete profile', err)
+			logAppError('ProfilesPage.handleDeleteProfile', err, {
+				metadata: {
+					profileId,
+				},
+			})
 			setMutationError('Failed to delete profile. Try again.')
 		}
 	}
@@ -65,6 +74,7 @@ export const ProfilesPage = () => {
 		<section className="panel">
 			<h2>Profiles</h2>
 			<p>Each profile has separate pets, inventory, and wallet balances on this device.</p>
+			<p>Admin tools are available in the `Admin` tab.</p>
 
 			<div className="profiles-create-row">
 				<label className="profiles-field">

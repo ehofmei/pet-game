@@ -13,6 +13,7 @@ describe('App shell', () => {
 		expect(screen.getByRole('button', { name: 'Store' })).toBeInTheDocument()
 		expect(screen.getByRole('button', { name: 'Inventory' })).toBeInTheDocument()
 		expect(screen.getByRole('button', { name: 'Profiles' })).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Admin' })).toBeInTheDocument()
 		expect(await screen.findByRole('heading', { level: 2, name: 'Pets' })).toBeInTheDocument()
 		expect(await screen.findByText('Active Profile: Family')).toBeInTheDocument()
 	})
@@ -33,7 +34,7 @@ describe('App shell', () => {
 		await user.click(screen.getByRole('button', { name: 'Store' }))
 
 		expect(screen.getByRole('heading', { level: 2, name: 'Store' })).toBeInTheDocument()
-		expect(screen.getByText(/Store catalog, purchase flows, and pricing checks/i)).toBeInTheDocument()
+		expect(screen.getByText('Browse and buy pets, supplies, and session tokens.')).toBeInTheDocument()
 		expect(window.location.hash).toBe('#/store')
 	})
 })

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PetForm, type PetFormValues } from '../components/PetForm'
+import { TagList } from '../components/TagList'
 import { useActiveProfile } from '../context/useActiveProfile'
 import { appDb, BreedingRepo, PetRepo, PhotoRepo, type CreatePetInput } from '../db'
 import type { BreedingEvent, Pet, PetGender, PetSpecies } from '../models'
+import { logAppError } from '../utils'
 
 type PetsView = 'list' | 'create' | 'detail' | 'edit'
 type WildFilter = 'all' | 'wild' | 'adopted'
@@ -58,7 +60,11 @@ export const PetsPage = () => {
 			setPets(nextPets)
 			setPageError(null)
 		} catch (error: unknown) {
-			console.error('Failed to load pets', error)
+			logAppError('PetsPage.loadPets', error, {
+				metadata: {
+					activeProfileId: activeProfileId ?? 'none',
+				},
+			})
 			setPageError('Failed to load pets.')
 		} finally {
 			setIsLoadingPets(false)
@@ -129,7 +135,12 @@ export const PetsPage = () => {
 				const events = await breedingRepo.listByPetId(selectedPetId)
 				setBreedingHistory(events.filter((event) => event.profileId === activeProfileId))
 			} catch (error: unknown) {
-				console.error('Failed to load breeding history', error)
+				logAppError('PetsPage.loadBreedingHistory', error, {
+					metadata: {
+						activeProfileId: activeProfileId ?? 'none',
+						selectedPetId: selectedPetId ?? 'none',
+					},
+				})
 				setPageError('Failed to load breeding history.')
 				setBreedingHistory([])
 			} finally {
@@ -220,7 +231,11 @@ export const PetsPage = () => {
 			setView('detail')
 			setPageError(null)
 		} catch (error: unknown) {
-			console.error('Failed to create pet', error)
+			logAppError('PetsPage.handleCreatePet', error, {
+				metadata: {
+					activeProfileId: activeProfileId ?? 'none',
+				},
+			})
 			setPageError('Failed to create pet.')
 		} finally {
 			setIsSaving(false)
@@ -249,7 +264,12 @@ export const PetsPage = () => {
 			setView('detail')
 			setPageError(null)
 		} catch (error: unknown) {
-			console.error('Failed to update pet', error)
+			logAppError('PetsPage.handleUpdatePet', error, {
+				metadata: {
+					activeProfileId: activeProfileId ?? 'none',
+					selectedPetId: selectedPet?.id ?? 'none',
+				},
+			})
 			setPageError('Failed to update pet.')
 		} finally {
 			setIsSaving(false)
@@ -275,7 +295,12 @@ export const PetsPage = () => {
 			setView('list')
 			setPageError(null)
 		} catch (error: unknown) {
-			console.error('Failed to delete pet', error)
+			logAppError('PetsPage.handleDeleteSelectedPet', error, {
+				metadata: {
+					activeProfileId: activeProfileId ?? 'none',
+					selectedPetId: selectedPet?.id ?? 'none',
+				},
+			})
 			setPageError('Failed to delete pet.')
 		}
 	}
@@ -291,7 +316,13 @@ export const PetsPage = () => {
 			})
 			await loadPets()
 		} catch (error: unknown) {
-			console.error('Failed to adjust breed count', error)
+			logAppError('PetsPage.adjustBreedCount', error, {
+				metadata: {
+					activeProfileId: activeProfileId ?? 'none',
+					selectedPetId: selectedPet?.id ?? 'none',
+					delta,
+				},
+			})
 			setPageError('Failed to adjust breed count.')
 		}
 	}
@@ -396,8 +427,9 @@ export const PetsPage = () => {
 						<strong>Was Wild:</strong> {selectedPet.wasWild ? 'Yes' : 'No'}
 					</p>
 					<p>
-						<strong>Tags:</strong> {selectedPet.tags.length > 0 ? selectedPet.tags.join(', ') : 'None'}
+						<strong>Tags:</strong>
 					</p>
+					<TagList tags={selectedPet.tags} emptyLabel="No tags" />
 				</div>
 
 				<div className="pets-breed-count-row">
@@ -539,7 +571,10 @@ export const PetsPage = () => {
 									</p>
 									<p>Breed Count: {pet.breedCount}</p>
 									<p>{pet.wasWild ? 'Was wild before adopted' : 'Raised from card start'}</p>
-									<p>Tags: {pet.tags.length > 0 ? pet.tags.join(', ') : 'None'}</p>
+									<div>
+										<p>Tags:</p>
+										<TagList tags={pet.tags} emptyLabel="No tags" />
+									</div>
 								</div>
 								<div className="pets-item-actions">
 									<button

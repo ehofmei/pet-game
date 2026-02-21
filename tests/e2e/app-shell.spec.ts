@@ -10,6 +10,7 @@ test.describe('App shell', () => {
 		await expect(page.getByRole('button', { name: 'Store' })).toBeVisible()
 		await expect(page.getByRole('button', { name: 'Inventory' })).toBeVisible()
 		await expect(page.getByRole('button', { name: 'Profiles' })).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Admin' })).toBeVisible()
 
 		await page.getByRole('button', { name: 'Store' }).click()
 

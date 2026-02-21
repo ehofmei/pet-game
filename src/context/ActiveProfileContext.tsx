@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { initializeDatabase, ProfileRepo, WalletRepo, appDb } from '../db'
 import type { Profile } from '../models'
+import { logAppError } from '../utils'
 import { ActiveProfileContext, type ActiveProfileContextValue } from './activeProfileContextObject'
 
 const ACTIVE_PROFILE_STORAGE_KEY = 'pet-breeder-cards.active-profile-id'
@@ -62,7 +63,11 @@ export const ActiveProfileProvider = ({ children }: ActiveProfileProviderProps) 
 						? String((err as { name: unknown }).name)
 						: ''
 				if (errorName !== 'DatabaseClosedError') {
-					console.error('Failed to initialize active profile context', err)
+					logAppError('ActiveProfileProvider.initializeDatabase', err, {
+						metadata: {
+							errorName,
+						},
+					})
 				}
 				setError('Failed to load profiles.')
 			} finally {

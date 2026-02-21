@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { AdminPage } from './pages/AdminPage'
 import { TabNav, type TabOption } from './components/TabNav'
 import { ActiveProfileProvider } from './context/ActiveProfileContext'
 import { useActiveProfile } from './context/useActiveProfile'
@@ -9,7 +10,7 @@ import { ProfilesPage } from './pages/ProfilesPage'
 import { StorePage } from './pages/StorePage'
 import './App.css'
 
-type TabKey = 'pets' | 'breed' | 'store' | 'inventory' | 'profiles'
+type TabKey = 'pets' | 'breed' | 'store' | 'inventory' | 'profiles' | 'admin'
 
 const TAB_OPTIONS: TabOption<TabKey>[] = [
 	{ key: 'pets', label: 'Pets' },
@@ -17,6 +18,7 @@ const TAB_OPTIONS: TabOption<TabKey>[] = [
 	{ key: 'store', label: 'Store' },
 	{ key: 'inventory', label: 'Inventory' },
 	{ key: 'profiles', label: 'Profiles' },
+	{ key: 'admin', label: 'Admin' },
 ]
 
 const TAB_DETAILS: Record<TabKey, string> = {
@@ -25,6 +27,7 @@ const TAB_DETAILS: Record<TabKey, string> = {
 	store: 'Browse and buy pets, supplies, and session tokens.',
 	inventory: 'Track your items and currency balances.',
 	profiles: 'Manage local family profiles and app settings.',
+	admin: 'Parent tools for wallets, store catalog, and diagnostics.',
 }
 
 const getInitialTab = (): TabKey => {
@@ -63,6 +66,8 @@ const AppShell = () => {
 				return <InventoryPage />
 			case 'profiles':
 				return <ProfilesPage />
+			case 'admin':
+				return <AdminPage />
 			default:
 				return <PetsPage />
 		}

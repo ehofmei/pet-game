@@ -20,7 +20,10 @@ Implement catalog browsing, purchases, inventory quantity management, and wallet
 	- Quick +/- quantity adjustments with confirmation
 4. Wallet display and manual parent adjustments with reason.
 5. TransactionLog entries for all money and admin adjustments.
-6. Admin: add custom StoreItem (local-only) in Profiles/settings area.
+6. Admin controls:
+	- add/edit/delete StoreItems (local-only)
+	- wallet adjustments with reason
+	- diagnostics visibility
 
 ## Non-Goals
 
@@ -42,3 +45,8 @@ Implement catalog browsing, purchases, inventory quantity management, and wallet
 1. Purchases fail gracefully on insufficient balance.
 2. Purchases mutate wallet/inventory/pets correctly.
 3. Manual wallet adjustments are logged with notes.
+
+## Status
+
+1. Completed.
+2. Implemented pages/services/tests now cover store purchases, wallet adjustment, inventory adjustment, transaction visibility, and admin local store-item creation.

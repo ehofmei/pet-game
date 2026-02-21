@@ -4,12 +4,15 @@ Offline-first, installable PWA for tracking a kid-made pet breeding card game.
 
 ## Current Status
 
-Phase 01 is implemented:
+Phases 01-05 are implemented:
 
 1. React + TypeScript + Vite scaffold
 2. PWA manifest and service worker via `vite-plugin-pwa`
-3. Responsive app shell with five tabs (`Pets`, `Breed`, `Store`, `Inventory`, `Profiles`)
-4. Required source folders initialized: `src/db`, `src/models`, `src/pages`, `src/components`, `src/utils`
+3. Responsive app shell with six tabs (`Pets`, `Breed`, `Store`, `Inventory`, `Profiles`, `Admin`)
+4. Pets CRUD with local photos and filtering
+5. Store purchasing and wallet/inventory updates with transaction logs
+6. Profiles management with separate Admin tools tab
+7. In-app diagnostics panel for recent detailed error logs
 
 ## Development
 
@@ -49,6 +52,15 @@ After first load, the app shell is cached for offline use.
 1. Full first-time deploy guide: `docs/deploy-github-pages.md`
 2. A ready workflow is included at `.github/workflows/deploy-pages.yml`
 3. In GitHub, set `Settings` -> `Pages` -> `Source` to `GitHub Actions`
+
+## Documentation
+
+1. Tech stack cheat sheet: `docs/tech-stack-cheat-sheet.md`
+2. App usage guide: `docs/app-user-guide.md`
+3. Data model reference: `docs/data-model-reference.md`
+4. Error diagnostics: `docs/error-diagnostics.md`
+5. Testing strategy: `docs/testing-strategy.md`
+6. Phase plans: `docs/phases/`
 
 ## Project Plans
 
