@@ -11,6 +11,8 @@ describe('Profiles page', () => {
 
 		expect(await screen.findByRole('heading', { level: 2, name: 'Profiles' })).toBeInTheDocument()
 		expect(await screen.findByText('Family')).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Export Data' })).toBeInTheDocument()
+		expect(screen.getByLabelText('Import Data')).toBeInTheDocument()
 
 		await user.type(screen.getByPlaceholderText('New profile name'), 'Kid')
 		await user.click(screen.getByRole('button', { name: 'Add Profile' }))

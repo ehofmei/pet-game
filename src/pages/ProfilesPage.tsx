@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ChangeEvent } from 'react'
+import { appDb, exportBackupData, importBackupData, parseBackupPayload } from '../db'
 import { useActiveProfile } from '../context/useActiveProfile'
 import { logAppError } from '../utils'
 
@@ -8,6 +9,8 @@ export const ProfilesPage = () => {
 	const [newProfileName, setNewProfileName] = useState('')
 	const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({})
 	const [mutationError, setMutationError] = useState<string | null>(null)
+	const [statusMessage, setStatusMessage] = useState<string | null>(null)
+	const [isImporting, setIsImporting] = useState(false)
 
 	const canDeleteProfiles = useMemo(() => profiles.length > 1, [profiles.length])
 
@@ -23,6 +26,7 @@ export const ProfilesPage = () => {
 	const handleCreateProfile = async () => {
 		try {
 			setMutationError(null)
+			setStatusMessage(null)
 			await createProfile(newProfileName)
 			setNewProfileName('')
 		} catch (err: unknown) {
@@ -35,6 +39,7 @@ export const ProfilesPage = () => {
 		const draftName = renameDrafts[profileId] ?? fallbackName
 		try {
 			setMutationError(null)
+			setStatusMessage(null)
 			await renameProfile(profileId, draftName)
 		} catch (err: unknown) {
 			logAppError('ProfilesPage.handleRenameProfile', err, {
@@ -59,6 +64,7 @@ export const ProfilesPage = () => {
 
 		try {
 			setMutationError(null)
+			setStatusMessage(null)
 			await deleteProfile(profileId)
 		} catch (err: unknown) {
 			logAppError('ProfilesPage.handleDeleteProfile', err, {
@@ -70,11 +76,83 @@ export const ProfilesPage = () => {
 		}
 	}
 
+	const handleExportData = async () => {
+		try {
+			setMutationError(null)
+			setStatusMessage(null)
+			const payload = await exportBackupData(appDb)
+			const backupJson = JSON.stringify(payload, null, '\t')
+			const blob = new Blob([backupJson], { type: 'application/json' })
+			const url = URL.createObjectURL(blob)
+			const anchor = document.createElement('a')
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+			anchor.href = url
+			anchor.download = `the-pet-game-backup-${timestamp}.json`
+			document.body.appendChild(anchor)
+			anchor.click()
+			document.body.removeChild(anchor)
+			URL.revokeObjectURL(url)
+			setStatusMessage('Export complete. Backup JSON downloaded.')
+		} catch (err: unknown) {
+			logAppError('ProfilesPage.handleExportData', err)
+			setMutationError('Failed to export data.')
+		}
+	}
+
+	const handleImportData = async (event: ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0]
+		event.target.value = ''
+		if (!file) {
+			return
+		}
+
+		const confirmed = window.confirm(
+			'Import will overwrite all local data on this device. Continue?',
+		)
+		if (!confirmed) {
+			return
+		}
+
+		setIsImporting(true)
+		try {
+			setMutationError(null)
+			setStatusMessage(null)
+			const text = await file.text()
+			const parsed = parseBackupPayload(JSON.parse(text) as unknown)
+			await importBackupData(appDb, parsed)
+			window.location.reload()
+		} catch (err: unknown) {
+			logAppError('ProfilesPage.handleImportData', err)
+			setMutationError('Failed to import data. Check the backup file and try again.')
+		} finally {
+			setIsImporting(false)
+		}
+	}
+
 	return (
 		<section className="panel">
 			<h2>Profiles</h2>
 			<p>Each profile has separate pets, inventory, and wallet balances on this device.</p>
 			<p>Admin tools are available in the `Admin` tab.</p>
+
+			<div className="profiles-backup-row">
+				<button type="button" onClick={handleExportData}>
+					Export Data
+				</button>
+				<label className="profiles-import-label">
+					<span>Import Data</span>
+					<input
+						type="file"
+						accept="application/json"
+						onChange={handleImportData}
+						disabled={isImporting}
+						aria-label="Import Data"
+					/>
+				</label>
+			</div>
+			<p className="profiles-helper-text">
+				Import overwrites all local data on this device. Export first before changing icons or reinstalling.
+			</p>
 
 			<div className="profiles-create-row">
 				<label className="profiles-field">
@@ -93,6 +171,7 @@ export const ProfilesPage = () => {
 
 			{error ? <p className="profiles-error">{error}</p> : null}
 			{mutationError ? <p className="profiles-error">{mutationError}</p> : null}
+			{statusMessage ? <p className="profiles-status">{statusMessage}</p> : null}
 
 			<ul className="profiles-list">
 				{profiles.map((profile) => {

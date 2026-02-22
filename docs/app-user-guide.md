@@ -50,7 +50,14 @@ Manage wallet adjustments, store catalog items, and diagnostics.
 5. Delete profile:
 	- Tap `Delete`.
 	- Confirm dialog.
-6. Guardrail:
+6. Export backup:
+	- Tap `Export Data`.
+	- Save the downloaded `.json` file somewhere safe.
+7. Import backup:
+	- Tap `Import Data`.
+	- Pick a backup `.json` file.
+	- Confirm overwrite warning.
+8. Guardrail:
 	- You cannot delete the last remaining profile.
 
 ## Using Pets
@@ -196,3 +203,6 @@ In Pets list view you can filter by:
 	- Open `Admin` -> `Diagnostics: Recent Errors` to see details.
 5. Blank page after deploy:
 	- Wait for GitHub Pages workflow to finish and reload.
+6. Reinstall / icon refresh risk on iOS:
+	- Always run `Export Data` first.
+	- If data is lost, use `Import Data` with your saved backup file.

@@ -86,6 +86,37 @@
 	margin-bottom: 1rem;
 }
 
+.profiles-backup-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.7rem;
+	align-items: end;
+	margin-bottom: 0.6rem;
+}
+
+.profiles-import-label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #285471;
+}
+
+.profiles-import-label input {
+	border: 1px solid #b6d9ef;
+	border-radius: 10px;
+	padding: 0.4rem 0.5rem;
+	background: #fbfeff;
+	color: #164363;
+}
+
+.profiles-helper-text {
+	font-size: 0.86rem;
+	color: #285471;
+	margin-bottom: 0.9rem;
+}
+
 .profiles-field {
 	display: flex;
 	flex-direction: column;
@@ -162,6 +193,11 @@
 
 .profiles-error {
 	color: #aa2748;
+	font-weight: 700;
+}
+
+.profiles-status {
+	color: #1f7a46;
 	font-weight: 700;
 }
 

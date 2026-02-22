@@ -51,9 +51,9 @@ Used for: Durable offline storage of all app state.
 Purpose: Stable unique identifiers for records.
 Used for: Entity IDs across profile/pet/photo and related records.
 
-4. Domain services (`economyService`, `breedingService`)
+4. Domain services (`economyService`, `breedingService`, `backupService`)
 Purpose: Transaction-safe business logic over multiple Dexie tables.
-Used for: Store purchases, wallet/inventory adjustments, breeding flow side effects.
+Used for: Store purchases, wallet/inventory adjustments, breeding flow side effects, and export/import backups.
 
 ## Error Diagnostics
 
