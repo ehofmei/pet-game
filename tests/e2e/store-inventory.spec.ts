@@ -1,17 +1,17 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Store and inventory economy flow', () => {
-	test('funds wallet, buys an item, and adjusts inventory quantity', async ({ page }) => {
-		await page.goto('/#/inventory')
-		await expect(page.getByRole('heading', { level: 2, name: 'Inventory' })).toBeVisible()
-		await expect(page.getByText('Profile: Family', { exact: true })).toBeVisible()
+	test('funds wallet from Admin, buys an item, and adjusts inventory quantity', async ({ page }) => {
+		await page.goto('/#/admin')
+		await expect(page.getByRole('heading', { level: 2, name: 'Admin' })).toBeVisible()
+		await expect(page.getByText('Active Profile: Family')).toBeVisible()
 
-		await page.getByLabel('Coins change', { exact: true }).fill('20')
-		await page.getByLabel('Wallet adjustment reason').fill('E2E seed funds')
-		await page.getByRole('button', { name: 'Apply Wallet Adjustment' }).click()
+		await page.getByLabel('Admin Coins change', { exact: true }).fill('20')
+		await page.getByLabel('Admin wallet reason').fill('E2E seed funds')
+		await page.getByRole('button', { name: 'Apply Wallet Update' }).click()
 		await expect(page.locator('.wallet-balance-card')).toContainText('Coins: 20')
 
-		await page.getByRole('button', { name: 'Store' }).click()
+		await page.getByRole('button', { name: 'Store', exact: true }).click()
 		await expect(page.getByRole('heading', { level: 2, name: 'Store' })).toBeVisible()
 
 		const toyCard = page

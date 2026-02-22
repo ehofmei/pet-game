@@ -24,7 +24,7 @@ const TAB_OPTIONS: TabOption<TabKey>[] = [
 const TAB_DETAILS: Record<TabKey, string> = {
 	pets: 'Create and manage your pet cards with photos.',
 	breed: 'Pair parent pets and run breeding sessions.',
-	store: 'Browse and buy pets, supplies, and session tokens.',
+	store: 'Browse and buy pets, supplies, and Breeding Cards.',
 	inventory: 'Track your items and currency balances.',
 	profiles: 'Manage local family profiles and app settings.',
 	admin: 'Parent tools for wallets, store catalog, and diagnostics.',
@@ -76,8 +76,7 @@ const AppShell = () => {
 	return (
 		<div className="app-shell">
 			<header className="app-header">
-				<p className="app-eyebrow">Offline-First PWA</p>
-				<h1>Pet Breeder Cards</h1>
+				<h1>The Pet Game</h1>
 				<p className="app-subtitle">{TAB_DETAILS[activeTab]}</p>
 				<p className="app-profile-chip">
 					{profileLoading

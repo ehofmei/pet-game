@@ -1,4 +1,4 @@
-# Pet Breeder Cards Tech Stack Cheat Sheet
+# The Pet Game Tech Stack Cheat Sheet
 
 This file is a quick reference for how the app is built and why each major tool exists.
 

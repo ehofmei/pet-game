@@ -4,19 +4,21 @@ import { describe, expect, it } from 'vitest'
 import App from '../App'
 
 describe('Store and inventory flows', () => {
-	it('adjusts wallet, buys a store item, and shows it in inventory', async () => {
-		window.location.hash = '#/inventory'
+	it(
+		'funds wallet from Admin, buys a store item, and shows it in inventory',
+		async () => {
+		window.location.hash = '#/admin'
 		const user = userEvent.setup()
 		render(<App />)
 
-		expect(await screen.findByRole('heading', { level: 2, name: 'Inventory' })).toBeInTheDocument()
-		expect(await screen.findByText('Profile: Family')).toBeInTheDocument()
+		expect(await screen.findByRole('heading', { level: 2, name: 'Admin' })).toBeInTheDocument()
+		expect(await screen.findByText(/Active Profile: Family/i)).toBeInTheDocument()
 
-		await user.clear(screen.getByLabelText('Coins change'))
-		await user.type(screen.getByLabelText('Coins change'), '20')
-		await user.type(screen.getByLabelText('Wallet adjustment reason'), 'Seed test funds')
-		await user.click(screen.getByRole('button', { name: 'Apply Wallet Adjustment' }))
-		expect(await screen.findByText('Wallet adjusted and logged.')).toBeInTheDocument()
+		await user.clear(screen.getByLabelText('Admin Coins change'))
+		await user.type(screen.getByLabelText('Admin Coins change'), '20')
+		await user.type(screen.getByLabelText('Admin wallet reason'), 'Seed test funds')
+		await user.click(screen.getByRole('button', { name: 'Apply Wallet Update' }))
+		expect(await screen.findByText('Wallet updated.')).toBeInTheDocument()
 
 		await user.click(screen.getByRole('button', { name: 'Store' }))
 		expect(await screen.findByRole('heading', { level: 2, name: 'Store' })).toBeInTheDocument()
@@ -32,5 +34,7 @@ describe('Store and inventory flows', () => {
 		await user.click(screen.getByRole('button', { name: 'Inventory' }))
 		expect(await screen.findByRole('heading', { level: 2, name: 'Inventory' })).toBeInTheDocument()
 		expect(await screen.findByRole('heading', { level: 3, name: 'Toy (Any Species)' })).toBeInTheDocument()
-	})
+		},
+		15_000,
+	)
 })

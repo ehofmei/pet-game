@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it } from 'vitest'
+import { EXTRA_BREED_CARD_ITEM_ID } from './constants'
 import { ProfileRepo, WalletRepo } from './repos'
 import { STARTER_STORE_ITEMS, seedDatabase } from './seed'
 import { createTestDb, disposeTestDb } from './testDb'
@@ -23,6 +24,7 @@ describe('seedDatabase', () => {
 		const profiles = await new ProfileRepo(db).list()
 		const wallet = await new WalletRepo(db).getByProfileId(profiles[0].id)
 		const storeCount = await db.storeItems.count()
+		const extraBreedCard = await db.storeItems.get(EXTRA_BREED_CARD_ITEM_ID)
 
 		expect(result.profileCreated).toBe(true)
 		expect(result.storeItemsInserted).toBeGreaterThanOrEqual(12)
@@ -32,6 +34,7 @@ describe('seedDatabase', () => {
 		expect(wallet?.coins).toBe(0)
 		expect(wallet?.petCoins).toBe(0)
 		expect(storeCount).toBe(STARTER_STORE_ITEMS.length)
+		expect(extraBreedCard?.name).toBe('Extra Breed Card')
 	})
 
 	it('is idempotent and does not duplicate seed records', async () => {

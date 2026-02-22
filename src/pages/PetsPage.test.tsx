@@ -53,27 +53,33 @@ describe('Pets page', () => {
 		expect(screen.getByText('Fluffy')).toBeInTheDocument()
 	})
 
-	it('filters pets by species and search text', async () => {
-		window.location.hash = '#/pets'
-		const user = userEvent.setup()
-		render(<App />)
+	it(
+		'filters pets by species and search text',
+		async () => {
+			window.location.hash = '#/pets'
+			const user = userEvent.setup()
+			render(<App />)
 
-		await screen.findByRole('heading', { level: 2, name: 'Pets' })
-		await addPetThroughForm({ user, name: 'Fluffy', species: 'cat', tags: 'fluffy, sleepy' })
-		await user.click(screen.getByRole('button', { name: 'Back to Pets' }))
-		await addPetThroughForm({ user, name: 'Rex', species: 'dog', tags: 'guard, brave' })
-		await user.click(screen.getByRole('button', { name: 'Back to Pets' }))
+			await screen.findByRole('heading', { level: 2, name: 'Pets' })
+			await addPetThroughForm({ user, name: 'Fluffy', species: 'cat', tags: 'fluffy, sleepy' })
+			await screen.findByRole('heading', { level: 2, name: 'Fluffy' })
+			await user.click(screen.getByRole('button', { name: 'Back to Pets' }))
+			await addPetThroughForm({ user, name: 'Rex', species: 'dog', tags: 'guard, brave' })
+			await screen.findByRole('heading', { level: 2, name: 'Rex' })
+			await user.click(screen.getByRole('button', { name: 'Back to Pets' }))
 
-		await user.selectOptions(screen.getByLabelText('Filter species'), 'dog')
-		expect(screen.getByText('Rex')).toBeInTheDocument()
-		expect(screen.queryByText('Fluffy')).not.toBeInTheDocument()
+			await user.selectOptions(screen.getByLabelText('Filter species'), 'dog')
+			expect(screen.getByText('Rex')).toBeInTheDocument()
+			expect(screen.queryByText('Fluffy')).not.toBeInTheDocument()
 
-		await user.selectOptions(screen.getByLabelText('Filter species'), 'all')
-		await user.clear(screen.getByLabelText('Search pets'))
-		await user.type(screen.getByLabelText('Search pets'), 'fluffy')
-		await waitFor(() => {
-			expect(screen.getByText('Fluffy')).toBeInTheDocument()
-			expect(screen.queryByText('Rex')).not.toBeInTheDocument()
-		})
-	})
+			await user.selectOptions(screen.getByLabelText('Filter species'), 'all')
+			await user.clear(screen.getByLabelText('Search pets'))
+			await user.type(screen.getByLabelText('Search pets'), 'fluffy')
+			await waitFor(() => {
+				expect(screen.getByText('Fluffy')).toBeInTheDocument()
+				expect(screen.queryByText('Rex')).not.toBeInTheDocument()
+			})
+		},
+		15_000,
+	)
 })

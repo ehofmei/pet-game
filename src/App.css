@@ -743,16 +743,18 @@
 }
 
 .breed-pet-card {
-	border: 1px solid #cde5f6;
-	border-radius: 14px;
-	background: #fafdff;
+	border: none;
+	background: transparent;
 	padding: 0;
 	width: 100%;
 	text-align: left;
-	overflow: hidden;
 }
 
-.breed-pet-card.is-selected {
+.breed-pet-card .image-info-card {
+	border-color: #cde5f6;
+}
+
+.breed-pet-card.is-selected .image-info-card {
 	border-color: #1f6ea3;
 	box-shadow: 0 0 0 2px rgba(31, 110, 163, 0.16);
 }
@@ -807,6 +809,28 @@
 	margin: 0.2rem 0 0;
 	color: #355f7a;
 	font-size: 0.82rem;
+}
+
+.breed-success-list {
+	list-style: none;
+	padding: 0;
+	margin: 0.55rem 0 0;
+	display: grid;
+	gap: 0.55rem;
+}
+
+.breed-success-list li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.45rem;
+}
+
+.breed-success-list p {
+	margin: 0;
+	font-weight: 700;
+	color: #245670;
 }
 
 .breed-field {

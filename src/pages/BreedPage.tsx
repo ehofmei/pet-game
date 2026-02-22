@@ -1,86 +1,65 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { ImageInfoCard } from '../components/ImageInfoCard'
 import { TagList } from '../components/TagList'
 import { useActiveProfile } from '../context/useActiveProfile'
-import {
-	appDb,
-	BreedingError,
-	BreedingService,
-	EconomyService,
-	InventoryRepo,
-	PetRepo,
-	PhotoRepo,
-	StoreRepo,
-} from '../db'
-import type { Pet, StoreItem, Wallet } from '../models'
+import { EXTRA_BREED_CARD_ITEM_ID } from '../db/constants'
+import { appDb, BreedingError, BreedingService, EconomyService, InventoryRepo, PetRepo, PhotoRepo } from '../db'
+import type { Pet, Wallet } from '../models'
 import { logAppError, setPetsEditIntent } from '../utils'
 
 type SpeciesFilter = 'all' | Pet['species']
 
 type BreedingSuccessState = {
-	babyPetId: string
-	babyName: string
-	babySpecies: Pet['species']
+	babies: Array<{
+		id: string
+		name: string
+		species: Pet['species']
+	}>
 	parentAName: string
 	parentBName: string
-	sessionItemName: string
-	usedInventoryToken: boolean
+	childCount: number
+	totalCoinsCost: number
+	specialBreedApplied: boolean
+	extraBreedCardUsed: boolean
 }
+
+const CHILD_COST_COINS = 10
+const SPECIAL_BREED_EXTRA_COINS = 5
 
 const petRepo = new PetRepo(appDb)
-const storeRepo = new StoreRepo(appDb)
-const inventoryRepo = new InventoryRepo(appDb)
 const photoRepo = new PhotoRepo(appDb)
 const economyService = new EconomyService(appDb)
+const inventoryRepo = new InventoryRepo(appDb)
 const breedingService = new BreedingService(appDb)
 
-const isBreedingSessionStoreItem = (item: StoreItem): boolean => {
-	if (!item.isActive) {
-		return false
-	}
-	if (item.type === 'breedingSession') {
-		return true
-	}
-	return item.tags.some((tag) => tag.trim().toLowerCase() === 'breedingsession')
-}
+const parseThemeTags = (value: string): string[] =>
+	Array.from(
+		new Set(
+			value
+				.split(',')
+				.map((tag) => tag.trim())
+				.filter(Boolean),
+		),
+	)
 
-const getCostLabel = (item: StoreItem): string => {
-	const parts: string[] = []
-	if (item.priceCoins > 0) {
-		parts.push(`${item.priceCoins} Coins`)
-	}
-	if (item.pricePetCoins > 0) {
-		parts.push(`${item.pricePetCoins} PetCoins`)
-	}
-	if (parts.length === 0) {
-		return 'Free'
-	}
-	return parts.join(' + ')
-}
-
-const sortBySessionCost = (items: StoreItem[]): StoreItem[] =>
-	[...items].sort((a, b) => {
-		if (a.priceCoins !== b.priceCoins) {
-			return a.priceCoins - b.priceCoins
-		}
-		if (a.pricePetCoins !== b.pricePetCoins) {
-			return a.pricePetCoins - b.pricePetCoins
-		}
-		return a.id.localeCompare(b.id)
-	})
+const pluralizeChildren = (count: number): string => (count === 1 ? 'child' : 'children')
 
 export const BreedPage = () => {
 	const { activeProfile, activeProfileId, isLoading } = useActiveProfile()
 	const [pets, setPets] = useState<Pet[]>([])
 	const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({})
 	const [wallet, setWallet] = useState<Wallet | null>(null)
-	const [sessionItemCount, setSessionItemCount] = useState(0)
-	const [fallbackSessionItem, setFallbackSessionItem] = useState<StoreItem | null>(null)
 	const [parentAId, setParentAId] = useState('')
 	const [parentBId, setParentBId] = useState('')
 	const [selectionTarget, setSelectionTarget] = useState<'A' | 'B'>('A')
 	const [searchText, setSearchText] = useState('')
 	const [speciesFilter, setSpeciesFilter] = useState<SpeciesFilter>('all')
 	const [allowCrossSpecies, setAllowCrossSpecies] = useState(true)
+	const [childCount, setChildCount] = useState<number>(1)
+	const [specialBreedSelected, setSpecialBreedSelected] = useState(false)
+	const [useExtraBreedCard, setUseExtraBreedCard] = useState(false)
+	const [extraBreedCardQuantity, setExtraBreedCardQuantity] = useState(0)
+	const [themeTagsText, setThemeTagsText] = useState('')
 	const [isLoadingData, setIsLoadingData] = useState(false)
 	const [isBreeding, setIsBreeding] = useState(false)
 	const [statusMessage, setStatusMessage] = useState<string | null>(null)
@@ -91,29 +70,21 @@ export const BreedPage = () => {
 		if (!activeProfileId) {
 			setPets([])
 			setWallet(null)
-			setSessionItemCount(0)
-			setFallbackSessionItem(null)
+			setExtraBreedCardQuantity(0)
 			return
 		}
 
 		setIsLoadingData(true)
 		try {
-			const [profilePets, profileWallet, inventoryItems, activeStoreItems] = await Promise.all([
+			const [profilePets, profileWallet] = await Promise.all([
 				petRepo.listByProfile(activeProfileId),
 				economyService.getWallet(activeProfileId),
-				inventoryRepo.listByProfile(activeProfileId),
-				storeRepo.listActive(),
 			])
-			const sessionItems = sortBySessionCost(activeStoreItems.filter(isBreedingSessionStoreItem))
-			const sessionItemIds = new Set(sessionItems.map((item) => item.id))
-			const nextSessionItemCount = inventoryItems
-				.filter((item) => sessionItemIds.has(item.itemId))
-				.reduce((total, item) => total + item.quantity, 0)
+			const extraBreedCardInventory = await inventoryRepo.getByProfileAndItem(activeProfileId, EXTRA_BREED_CARD_ITEM_ID)
 
 			setPets(profilePets)
 			setWallet(profileWallet)
-			setSessionItemCount(nextSessionItemCount)
-			setFallbackSessionItem(sessionItems[0] ?? null)
+			setExtraBreedCardQuantity(extraBreedCardInventory?.quantity ?? 0)
 			setErrorMessage(null)
 		} catch (error: unknown) {
 			logAppError('BreedPage.loadData', error, {
@@ -134,6 +105,10 @@ export const BreedPage = () => {
 		setParentAId('')
 		setParentBId('')
 		setSelectionTarget('A')
+		setChildCount(1)
+		setSpecialBreedSelected(false)
+		setUseExtraBreedCard(false)
+		setThemeTagsText('')
 		void loadData()
 	}, [activeProfileId, loadData])
 
@@ -206,7 +181,35 @@ export const BreedPage = () => {
 	const parentA = useMemo(() => pets.find((pet) => pet.id === parentAId) ?? null, [pets, parentAId])
 	const parentB = useMemo(() => pets.find((pet) => pet.id === parentBId) ?? null, [pets, parentBId])
 
-	const canSubmitBreed = !!activeProfileId && !!parentA && !!parentB && parentA.id !== parentB.id && !isBreeding
+	const themeTags = useMemo(() => parseThemeTags(themeTagsText), [themeTagsText])
+	const sameGenderNeedsSpecial = useMemo(() => {
+		if (!parentA || !parentB) {
+			return false
+		}
+		return (
+			(parentA.gender === 'male' && parentB.gender === 'male') ||
+			(parentA.gender === 'female' && parentB.gender === 'female')
+		)
+	}, [parentA, parentB])
+	const specialBreedApplied = specialBreedSelected || sameGenderNeedsSpecial || themeTags.length > 0
+	const extraBreedCardRequired = useMemo(() => {
+		if (!parentA || !parentB) {
+			return false
+		}
+		return parentA.breedCount >= 5 || parentB.breedCount >= 5
+	}, [parentA, parentB])
+	const estimatedCost = childCount * CHILD_COST_COINS + (specialBreedApplied ? SPECIAL_BREED_EXTRA_COINS : 0)
+	const hasEnoughCoins = (wallet?.coins ?? 0) >= estimatedCost
+	const hasRequiredExtraBreedCard = !extraBreedCardRequired || (useExtraBreedCard && extraBreedCardQuantity > 0)
+
+	const canSubmitBreed =
+		!!activeProfileId &&
+		!!parentA &&
+		!!parentB &&
+		parentA.id !== parentB.id &&
+		!isBreeding &&
+		hasEnoughCoins &&
+		hasRequiredExtraBreedCard
 
 	const selectParentFromGallery = (petId: string) => {
 		if (selectionTarget === 'A') {
@@ -247,22 +250,6 @@ export const BreedPage = () => {
 			return
 		}
 
-		let autoBuySessionIfNeeded = false
-		if (sessionItemCount <= 0) {
-			if (!fallbackSessionItem) {
-				setErrorMessage('No breeding session item is available in Store.')
-				setStatusMessage(null)
-				return
-			}
-			const confirmed = window.confirm(
-				`No breeding tokens in inventory. Buy and use "${fallbackSessionItem.name}" for ${getCostLabel(fallbackSessionItem)}?`,
-			)
-			if (!confirmed) {
-				return
-			}
-			autoBuySessionIfNeeded = true
-		}
-
 		setIsBreeding(true)
 		try {
 			const result = await breedingService.runBreeding({
@@ -270,19 +257,26 @@ export const BreedPage = () => {
 				parentAId: parentA.id,
 				parentBId: parentB.id,
 				allowCrossSpecies,
-				autoBuySessionIfNeeded,
+				childCount,
+				specialBreedRequested: specialBreedSelected,
+				themeTags,
+				useExtraBreedCard,
 			})
 			setWallet(result.wallet)
 			setSuccessState({
-				babyPetId: result.babyPet.id,
-				babyName: result.babyPet.name,
-				babySpecies: result.babyPet.species,
+				babies: result.babyPets.map((babyPet) => ({
+					id: babyPet.id,
+					name: babyPet.name,
+					species: babyPet.species,
+				})),
 				parentAName: result.parentA.name,
 				parentBName: result.parentB.name,
-				sessionItemName: result.breedingSessionStoreItem.name,
-				usedInventoryToken: result.usedBreedingSessionItem,
+				childCount: result.childCount,
+				totalCoinsCost: result.totalCoinsCost,
+				specialBreedApplied: result.specialBreedApplied,
+				extraBreedCardUsed: result.extraBreedCardUsed,
 			})
-			setStatusMessage(`Breeding complete. ${result.babyPet.name} was added to Pets.`)
+			setStatusMessage(`Breeding complete. ${result.childCount} ${pluralizeChildren(result.childCount)} added to Pets.`)
 			setErrorMessage(null)
 			await loadData()
 		} catch (error: unknown) {
@@ -305,11 +299,8 @@ export const BreedPage = () => {
 		}
 	}
 
-	const handleAddBabyPhotoNow = () => {
-		if (!successState) {
-			return
-		}
-		setPetsEditIntent(successState.babyPetId)
+	const handleAddBabyPhotoNow = (babyPetId: string) => {
+		setPetsEditIntent(babyPetId)
 		window.location.hash = '/pets'
 	}
 
@@ -343,18 +334,8 @@ export const BreedPage = () => {
 				<p>
 					<strong>Coins:</strong> {wallet?.coins ?? 0}
 				</p>
-				<p>
-					<strong>Breeding Tokens:</strong> {sessionItemCount}
-				</p>
 			</div>
-			{fallbackSessionItem ? (
-				<p className="breed-helper-text">
-					If no token is in inventory, breeding can buy and use "{fallbackSessionItem.name}" for{' '}
-					{getCostLabel(fallbackSessionItem)}.
-				</p>
-			) : (
-				<p className="breed-helper-text">No breeding session items are currently configured in Store.</p>
-			)}
+			<p className="breed-helper-text">Breeding Cards rule: each child costs 10 Coins.</p>
 
 			<div className="breed-filter-grid">
 				<label className="breed-field">
@@ -455,14 +436,84 @@ export const BreedPage = () => {
 					</div>
 				</div>
 
-				<label className="breed-field breed-field-toggle">
+				<div className="breed-form-grid">
+					<label className="breed-field">
+						<span>Children</span>
+						<select
+							value={childCount}
+							onChange={(event) => setChildCount(Number.parseInt(event.target.value, 10) || 1)}
+							aria-label="Child count"
+						>
+							<option value={1}>1</option>
+							<option value={2}>2</option>
+							<option value={3}>3</option>
+						</select>
+					</label>
+
+					<label className="breed-field breed-field-toggle">
 						<input
 							type="checkbox"
-							checked={allowCrossSpecies}
-							onChange={(event) => setAllowCrossSpecies(event.target.checked)}
-							aria-label="Allow cross-species breeding"
+							checked={specialBreedApplied}
+							disabled={sameGenderNeedsSpecial}
+							onChange={(event) => setSpecialBreedSelected(event.target.checked)}
+							aria-label="Special Breed"
 						/>
-						<span>Allow cross-species breeding</span>
+						<span>Special Breed (+5 Coins)</span>
+					</label>
+
+					<label className="breed-field">
+						<span>Theme Tags (optional)</span>
+						<input
+							type="text"
+							value={themeTagsText}
+							onChange={(event) => setThemeTagsText(event.target.value)}
+							placeholder="grass, hearts"
+							aria-label="Theme tags"
+						/>
+					</label>
+				</div>
+
+				<label className="breed-field breed-field-toggle">
+					<input
+						type="checkbox"
+						checked={useExtraBreedCard}
+						onChange={(event) => setUseExtraBreedCard(event.target.checked)}
+						aria-label="Use Extra Breed Card"
+					/>
+					<span>Use Extra Breed Card</span>
+				</label>
+				<p className="breed-helper-text">Extra Breed Cards available: {extraBreedCardQuantity}</p>
+				{extraBreedCardRequired ? (
+					<p className="breed-helper-text">
+						This pair needs an Extra Breed Card because one parent has bred 5 or more times.
+					</p>
+				) : (
+					<p className="breed-helper-text">Extra Breed Card is only required once a parent reaches 5+ breeds.</p>
+				)}
+				{extraBreedCardRequired && !useExtraBreedCard ? (
+					<p className="store-error">Please confirm you will use an Extra Breed Card for this breeding.</p>
+				) : null}
+				{extraBreedCardRequired && extraBreedCardQuantity <= 0 ? (
+					<p className="store-error">No Extra Breed Cards in inventory. Buy one from Store first.</p>
+				) : null}
+
+				<p className="breed-helper-text">Estimated cost: {estimatedCost} Coins</p>
+				{sameGenderNeedsSpecial ? (
+					<p className="breed-helper-text">Special Breed is required for two male or two female parents.</p>
+				) : null}
+				{themeTags.length > 0 ? (
+					<p className="breed-helper-text">Theme tags automatically apply Special Breed (+5 Coins).</p>
+				) : null}
+				{!hasEnoughCoins ? <p className="store-error">Not enough coins for this breeding setup.</p> : null}
+
+				<label className="breed-field breed-field-toggle">
+					<input
+						type="checkbox"
+						checked={allowCrossSpecies}
+						onChange={(event) => setAllowCrossSpecies(event.target.checked)}
+						aria-label="Allow cross-species breeding"
+					/>
+					<span>Allow cross-species breeding</span>
 				</label>
 
 				<button type="submit" disabled={!canSubmitBreed}>
@@ -487,19 +538,22 @@ export const BreedPage = () => {
 									onClick={() => selectParentFromGallery(pet.id)}
 									aria-label={`Select ${pet.name}`}
 								>
-									<div className="breed-pet-photo">
-										{photoUrl ? <img src={photoUrl} alt={`${pet.name} card`} /> : <span>No Photo</span>}
-										{isParentA ? <span className="breed-pet-badge">Parent A</span> : null}
-										{isParentB ? <span className="breed-pet-badge breed-pet-badge-b">Parent B</span> : null}
-									</div>
-									<div className="breed-pet-meta">
-										<p className="breed-pet-name">{pet.name}</p>
-										<p>
-											{pet.species} | {pet.gender}
-										</p>
-										<p>Breed Count: {pet.breedCount}</p>
-										<TagList tags={pet.tags} emptyLabel="No tags" />
-									</div>
+									<ImageInfoCard
+										title={pet.name}
+										subtitle={`${pet.species} | ${pet.gender}`}
+										imageUrl={photoUrl}
+										imageAlt={`${pet.name} card`}
+										badges={[
+											...(isParentA ? [{ label: 'Parent A' }] : []),
+											...(isParentB ? [{ label: 'Parent B', tone: 'secondary' as const }] : []),
+										]}
+										content={
+											<>
+												<p>Breed Count: {pet.breedCount}</p>
+												<TagList tags={pet.tags} emptyLabel="No tags" />
+											</>
+										}
+									/>
 								</button>
 							</li>
 						)
@@ -516,20 +570,32 @@ export const BreedPage = () => {
 				<section className="breed-success">
 					<h3>Breeding Success</h3>
 					<p>
-						<strong>Baby:</strong> {successState.babyName} ({successState.babySpecies})
-					</p>
-					<p>
 						<strong>Parents:</strong> {successState.parentAName} + {successState.parentBName}
 					</p>
 					<p>
-						<strong>Session Source:</strong>{' '}
-						{successState.usedInventoryToken
-							? `"${successState.sessionItemName}" from inventory`
-							: `Bought and used "${successState.sessionItemName}"`}
+						<strong>Children:</strong> {successState.childCount}
 					</p>
-					<button type="button" onClick={handleAddBabyPhotoNow}>
-						Add Baby Photo Now
-					</button>
+					<p>
+						<strong>Special Breed:</strong> {successState.specialBreedApplied ? 'Yes' : 'No'}
+					</p>
+					<p>
+						<strong>Extra Breed Card Used:</strong> {successState.extraBreedCardUsed ? 'Yes' : 'No'}
+					</p>
+					<p>
+						<strong>Total Cost:</strong> {successState.totalCoinsCost} Coins
+					</p>
+					<ul className="breed-success-list">
+						{successState.babies.map((baby) => (
+							<li key={baby.id}>
+								<p>
+									{baby.name} ({baby.species})
+								</p>
+								<button type="button" onClick={() => handleAddBabyPhotoNow(baby.id)}>
+									Add Photo for {baby.name}
+								</button>
+							</li>
+						))}
+					</ul>
 				</section>
 			) : null}
 		</section>

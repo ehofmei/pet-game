@@ -1,4 +1,4 @@
-# Pet Breeder Cards App User Guide
+# The Pet Game App User Guide
 
 This is a living user guide for using the app as a player/parent on one device.
 
@@ -15,10 +15,10 @@ This is a living user guide for using the app as a player/parent on one device.
 Add, view, edit, filter, and manage pets.
 
 2. `Breed`
-Select two parent pets, consume a breeding session, and create a baby pet.
+Select two parent pets, choose child count, and create baby pets.
 
 3. `Store`
-Browse and buy pets, supplies, and breeding session items.
+Browse and buy pets, supplies, and Breeding Cards.
 
 4. `Inventory`
 View inventory, wallet balances, and transaction history.
@@ -92,6 +92,7 @@ In Pets list view you can filter by:
 5. Results:
 	- `pet` item: new pet entry is created
 	- item: inventory quantity increases
+	- `Extra Breed Card`: keep at least one in inventory for pets at 5+ breeds.
 6. If balance is too low, purchase is blocked.
 
 ## Using Breed
@@ -102,31 +103,32 @@ In Pets list view you can filter by:
 4. Toggle `Allow cross-species breeding` on/off.
 5. Tap `Breed Pets`.
 6. Resource rules:
-	- If you have a breeding token in inventory, one is consumed.
-	- If not, app prompts to buy/use a breeding session item from Store pricing.
+	- Choose 1, 2, or 3 children.
+	- Each child costs 10 Coins.
+	- `Special Breed` adds 5 extra Coins.
+	- `Special Breed` is required for two male parents or two female parents.
+	- Theme tags (for example `grass`, `hearts`) also apply Special Breed.
+	- A pet can breed normally up to 5 times.
+	- If either parent is at `breedCount >= 5`, an `Extra Breed Card` is required and one card is consumed from inventory.
 7. Result:
 	- parent `breedCount` increments by 1 for each parent
 	- baby pet is created with default name/species/tags
 	- breeding event and transaction log are written
-8. On success, tap `Add Baby Photo Now` to jump directly to baby edit form.
+8. On success, tap `Add Photo for ...` to jump directly to baby edit form.
 
 ## Using Inventory
 
 1. Open `Inventory` tab.
 2. Wallet balances are shown at top.
-3. Parent wallet adjustment:
-	- Enter `PetCoins Change (+/-)` and/or `Coins Change (+/-)`
-	- Enter required reason
-	- Tap `Apply Wallet Adjustment`
-4. Filter inventory by:
+3. Filter inventory by:
 	- item type
 	- species restriction
 	- tag text
-5. Quick quantity adjustments:
+4. Quick quantity adjustments:
 	- tap `-1` or `+1`
 	- confirm prompt
 	- enter required reason
-6. `Recent Transactions` shows newest wallet/item changes.
+5. `Recent Transactions` shows newest wallet/item changes.
 
 ## Admin Tools
 

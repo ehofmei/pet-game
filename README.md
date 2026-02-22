@@ -1,4 +1,4 @@
-# Pet Breeder Cards
+# The Pet Game
 
 Offline-first, installable PWA for tracking a kid-made pet breeding card game.
 

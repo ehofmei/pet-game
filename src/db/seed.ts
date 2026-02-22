@@ -1,4 +1,5 @@
 import type { StoreItem } from '../models'
+import { EXTRA_BREED_CARD_ITEM_ID } from './constants'
 import { ProfileRepo, StoreRepo, WalletRepo } from './repos'
 import type { PetBreederCardsDb } from './database'
 
@@ -10,13 +11,25 @@ export const STARTER_STORE_ITEMS: ReadonlyArray<SeedStoreItem> = [
 	{
 		id: 'breeding-session-basic',
 		type: 'breedingSession',
-		name: 'Breeding Session Token',
-		description: 'Use one token to run one breeding session.',
+		name: 'Breeding Card',
+		description: 'Used in breeding. Each child costs 10 Coins.',
 		speciesRestriction: null,
 		pricePetCoins: 0,
 		priceCoins: 10,
 		photoId: null,
 		tags: ['breedingSession'],
+		isActive: true,
+	},
+	{
+		id: EXTRA_BREED_CARD_ITEM_ID,
+		type: 'breedingSession',
+		name: 'Extra Breed Card',
+		description: 'Required when breeding with a pet that already has 5 or more breeds.',
+		speciesRestriction: null,
+		pricePetCoins: 0,
+		priceCoins: 15,
+		photoId: null,
+		tags: ['breedingSession', 'extraBreedCard'],
 		isActive: true,
 	},
 	{
@@ -216,6 +229,14 @@ export const seedDatabase = async (db: PetBreederCardsDb): Promise<SeedResult> =
 		if (!existing) {
 			await storeRepo.put(item)
 			storeItemsInserted += 1
+			continue
+		}
+
+		if (
+			(item.id === 'breeding-session-basic' || item.id === EXTRA_BREED_CARD_ITEM_ID) &&
+			(existing.name !== item.name || existing.description !== item.description)
+		) {
+			await storeRepo.put(item)
 		}
 	}
 

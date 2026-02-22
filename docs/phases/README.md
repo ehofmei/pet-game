@@ -1,4 +1,4 @@
-# Pet Breeder Cards Delivery Phases
+# The Pet Game Delivery Phases
 
 This folder contains two documents per phase:
 

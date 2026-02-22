@@ -1,14 +1,14 @@
-import type { BreedingEvent, InventoryItem, Pet, StoreItem, TransactionLog, Wallet } from '../../models'
+import type { BreedingEvent, Pet, TransactionLog, Wallet } from '../../models'
 import { createId, nowIso } from '../../utils'
+import { EXTRA_BREED_CARD_ITEM_ID } from '../constants'
 import type { PetBreederCardsDb } from '../database'
 
-type BreedingSessionOption = {
-	storeItem: StoreItem
-	inventoryItem: InventoryItem | null
-}
+const CHILD_COST_COINS = 10
+const SPECIAL_BREED_EXTRA_COINS = 5
+const EXTRA_BREED_CARD_THRESHOLD = 5
 
 export class BreedingError extends Error {
-	code: 'NOT_FOUND' | 'INVALID_INPUT' | 'INSUFFICIENT_FUNDS' | 'BREEDING_SESSION_REQUIRED'
+	code: 'NOT_FOUND' | 'INVALID_INPUT' | 'INSUFFICIENT_FUNDS' | 'MISSING_REQUIRED_ITEM'
 
 	constructor(message: string, code: BreedingError['code']) {
 		super(message)
@@ -21,19 +21,24 @@ export type RunBreedingInput = {
 	parentAId: string
 	parentBId: string
 	allowCrossSpecies: boolean
-	autoBuySessionIfNeeded: boolean
+	childCount: number
+	specialBreedRequested: boolean
+	themeTags: string[]
+	useExtraBreedCard: boolean
 }
 
 export type RunBreedingResult = {
 	parentA: Pet
 	parentB: Pet
-	babyPet: Pet
-	breedingEvent: BreedingEvent
+	babyPets: Pet[]
+	breedingEvents: BreedingEvent[]
 	transactionLog: TransactionLog
 	wallet: Wallet
-	usedBreedingSessionItem: boolean
-	purchasedBreedingSession: boolean
-	breedingSessionStoreItem: StoreItem
+	childCount: number
+	totalCoinsCost: number
+	specialBreedApplied: boolean
+	extraBreedCardRequired: boolean
+	extraBreedCardUsed: boolean
 }
 
 const createWalletRecord = (profileId: string): Wallet => ({
@@ -43,44 +48,19 @@ const createWalletRecord = (profileId: string): Wallet => ({
 	updatedAt: nowIso(),
 })
 
-const toLower = (value: string): string => value.trim().toLowerCase()
-
-const isBreedingSessionStoreItem = (item: StoreItem): boolean => {
-	if (!item.isActive) {
-		return false
-	}
-	if (item.type === 'breedingSession') {
-		return true
-	}
-	return item.tags.some((tag) => toLower(tag) === 'breedingsession')
-}
-
-const sortBreedingSessionItems = (items: StoreItem[]): StoreItem[] =>
-	[...items].sort((a, b) => {
-		if (a.priceCoins !== b.priceCoins) {
-			return a.priceCoins - b.priceCoins
-		}
-		if (a.pricePetCoins !== b.pricePetCoins) {
-			return a.pricePetCoins - b.pricePetCoins
-		}
-		return a.id.localeCompare(b.id)
-	})
-
 const createTransaction = ({
 	profileId,
-	deltaPetCoins,
 	deltaCoins,
 	notes,
 }: {
 	profileId: string
-	deltaPetCoins: number
 	deltaCoins: number
 	notes: string
 }): TransactionLog => ({
 	id: createId(),
 	profileId,
 	kind: 'breeding',
-	deltaPetCoins: Object.is(deltaPetCoins, -0) ? 0 : deltaPetCoins,
+	deltaPetCoins: 0,
 	deltaCoins: Object.is(deltaCoins, -0) ? 0 : deltaCoins,
 	notes: notes.trim(),
 	createdAt: nowIso(),
@@ -91,28 +71,44 @@ const createBreedingEvent = ({
 	parentAId,
 	parentBId,
 	babyPetId,
-	usedBreedingSessionItem,
+	usedExtraBreedCard,
 }: {
 	profileId: string
 	parentAId: string
 	parentBId: string
 	babyPetId: string
-	usedBreedingSessionItem: boolean
+	usedExtraBreedCard: boolean
 }): BreedingEvent => ({
 	id: createId(),
 	profileId,
 	parentAId,
 	parentBId,
 	babyPetId,
-	usedBreedingSessionItem,
+	usedBreedingSessionItem: usedExtraBreedCard,
 	createdAt: nowIso(),
 })
 
 const getBabySpecies = (parentA: Pet, parentB: Pet): Pet['species'] =>
 	parentA.species === parentB.species ? parentA.species : 'mixed'
 
-const getBabyTags = (parentA: Pet, parentB: Pet): string[] =>
-	Array.from(new Set([...parentA.tags, ...parentB.tags, 'baby']))
+const normalizeThemeTags = (tags: string[]): string[] =>
+	Array.from(
+		new Set(
+			tags
+				.map((tag) => tag.trim())
+				.filter(Boolean),
+		),
+	)
+
+const getBabyTags = (parentA: Pet, parentB: Pet, themeTags: string[]): string[] =>
+	Array.from(new Set([...parentA.tags, ...parentB.tags, ...themeTags, 'baby']))
+
+const needsMandatorySpecialBreedForGender = (parentA: Pet, parentB: Pet): boolean =>
+	(parentA.gender === 'male' && parentB.gender === 'male') ||
+	(parentA.gender === 'female' && parentB.gender === 'female')
+
+const needsExtraBreedCard = (parentA: Pet, parentB: Pet): boolean =>
+	parentA.breedCount >= EXTRA_BREED_CARD_THRESHOLD || parentB.breedCount >= EXTRA_BREED_CARD_THRESHOLD
 
 export class BreedingService {
 	private readonly db: PetBreederCardsDb
@@ -140,107 +136,66 @@ export class BreedingService {
 		return pet
 	}
 
-	private async resolveBreedingSessionOption(profileId: string): Promise<{
-		inventoryOption: BreedingSessionOption | null
-		fallbackStoreItem: StoreItem
-	}> {
-		const storeItems = await this.db.storeItems.toArray()
-		const sessionItems = sortBreedingSessionItems(storeItems.filter(isBreedingSessionStoreItem))
-		if (sessionItems.length === 0) {
-			throw new BreedingError('No breeding session item is available in Store.', 'NOT_FOUND')
-		}
-
-		const inventoryItems = await this.db.inventoryItems.where('profileId').equals(profileId).toArray()
-		const inventoryByItemId = new Map(inventoryItems.map((item) => [item.itemId, item]))
-		const inventoryOption =
-			sessionItems
-				.map((storeItem) => ({
-					storeItem,
-					inventoryItem: inventoryByItemId.get(storeItem.id) ?? null,
-				}))
-				.find((option) => (option.inventoryItem?.quantity ?? 0) > 0) ?? null
-
-		return {
-			inventoryOption,
-			fallbackStoreItem: sessionItems[0],
-		}
-	}
-
 	async runBreeding(input: RunBreedingInput): Promise<RunBreedingResult> {
 		if (input.parentAId === input.parentBId) {
 			throw new BreedingError('Parent A and Parent B must be different pets.', 'INVALID_INPUT')
 		}
+		if (!Number.isInteger(input.childCount) || input.childCount < 1 || input.childCount > 3) {
+			throw new BreedingError('Child count must be 1, 2, or 3.', 'INVALID_INPUT')
+		}
 
 		const result = await this.db.transaction(
 			'rw',
-			[
-				this.db.pets,
-				this.db.wallets,
-				this.db.storeItems,
-				this.db.inventoryItems,
-				this.db.breedingEvents,
-				this.db.transactionLogs,
-			],
+			[this.db.pets, this.db.wallets, this.db.breedingEvents, this.db.transactionLogs, this.db.inventoryItems],
 			async () => {
 				const parentA = await this.getParentPet(input.profileId, input.parentAId, 'A')
 				const parentB = await this.getParentPet(input.profileId, input.parentBId, 'B')
 				if (!input.allowCrossSpecies && parentA.species !== parentB.species) {
 					throw new BreedingError('Cross-species breeding is disabled.', 'INVALID_INPUT')
 				}
+				const extraBreedCardRequired = needsExtraBreedCard(parentA, parentB)
+				if (extraBreedCardRequired && !input.useExtraBreedCard) {
+					throw new BreedingError('Extra Breed Card is required for pets with 5 or more breeds.', 'INVALID_INPUT')
+				}
 
-				const sessionResolution = await this.resolveBreedingSessionOption(input.profileId)
-				let wallet = await this.ensureWallet(input.profileId)
-
-				let usedBreedingSessionItem = false
-				let purchasedBreedingSession = false
-				let deltaPetCoins = 0
-				let deltaCoins = 0
-				let breedingSessionStoreItem: StoreItem
-
-				if (sessionResolution.inventoryOption) {
-					const { storeItem, inventoryItem } = sessionResolution.inventoryOption
-					if (!inventoryItem || inventoryItem.quantity <= 0) {
-						throw new BreedingError('Breeding session inventory is unavailable.', 'NOT_FOUND')
-					}
-
-					const updatedInventory: InventoryItem = {
-						...inventoryItem,
-						quantity: Math.max(0, inventoryItem.quantity - 1),
-						updatedAt: nowIso(),
-					}
-					await this.db.inventoryItems.put(updatedInventory)
-
-					usedBreedingSessionItem = true
-					breedingSessionStoreItem = storeItem
-				} else {
-					if (!input.autoBuySessionIfNeeded) {
+				const themeTags = normalizeThemeTags(input.themeTags)
+				const specialBreedApplied =
+					input.specialBreedRequested ||
+					themeTags.length > 0 ||
+					needsMandatorySpecialBreedForGender(parentA, parentB)
+				let extraBreedCardUsed = false
+				if (extraBreedCardRequired) {
+					const extraBreedCardInventory = await this.db.inventoryItems
+						.where('[profileId+itemId]')
+						.equals([input.profileId, EXTRA_BREED_CARD_ITEM_ID])
+						.first()
+					if (!extraBreedCardInventory || extraBreedCardInventory.quantity <= 0) {
 						throw new BreedingError(
-							'No breeding session token in inventory. Buy one with coins to continue.',
-							'BREEDING_SESSION_REQUIRED',
+							'Extra Breed Card is required. Buy one in Store before breeding this pair.',
+							'MISSING_REQUIRED_ITEM',
 						)
 					}
-
-					const fallbackStoreItem = sessionResolution.fallbackStoreItem
-					if (
-						wallet.petCoins < fallbackStoreItem.pricePetCoins ||
-						wallet.coins < fallbackStoreItem.priceCoins
-					) {
-						throw new BreedingError('Not enough balance to buy a breeding session.', 'INSUFFICIENT_FUNDS')
-					}
-
-					wallet = {
-						...wallet,
-						petCoins: wallet.petCoins - fallbackStoreItem.pricePetCoins,
-						coins: wallet.coins - fallbackStoreItem.priceCoins,
+					await this.db.inventoryItems.put({
+						...extraBreedCardInventory,
+						quantity: extraBreedCardInventory.quantity - 1,
 						updatedAt: nowIso(),
-					}
-					await this.db.wallets.put(wallet)
-
-					deltaPetCoins = -fallbackStoreItem.pricePetCoins
-					deltaCoins = -fallbackStoreItem.priceCoins
-					purchasedBreedingSession = true
-					breedingSessionStoreItem = fallbackStoreItem
+					})
+					extraBreedCardUsed = true
 				}
+
+				const totalCoinsCost = input.childCount * CHILD_COST_COINS + (specialBreedApplied ? SPECIAL_BREED_EXTRA_COINS : 0)
+
+				let wallet = await this.ensureWallet(input.profileId)
+				if (wallet.coins < totalCoinsCost) {
+					throw new BreedingError('Not enough coins to complete this breeding.', 'INSUFFICIENT_FUNDS')
+				}
+
+				wallet = {
+					...wallet,
+					coins: wallet.coins - totalCoinsCost,
+					updatedAt: nowIso(),
+				}
+				await this.db.wallets.put(wallet)
 
 				const updatedParentA: Pet = {
 					...parentA,
@@ -255,52 +210,59 @@ export class BreedingService {
 				await this.db.pets.put(updatedParentA)
 				await this.db.pets.put(updatedParentB)
 
-				const babyPet: Pet = {
-					id: createId(),
-					profileId: input.profileId,
-					name: `Baby of ${parentA.name} + ${parentB.name}`,
-					species: getBabySpecies(parentA, parentB),
-					gender: 'unknown',
-					wasWild: false,
-					tags: getBabyTags(parentA, parentB),
-					breedCount: 0,
-					photoId: null,
-					notes: `Bred from ${parentA.name} + ${parentB.name}.`,
-					createdAt: nowIso(),
-					updatedAt: nowIso(),
-				}
-				await this.db.pets.add(babyPet)
+				const babyPets: Pet[] = []
+				const breedingEvents: BreedingEvent[] = []
+				for (let index = 0; index < input.childCount; index += 1) {
+					const babyNumberPrefix = input.childCount > 1 ? `Baby ${index + 1} of` : 'Baby of'
+					const babyPet: Pet = {
+						id: createId(),
+						profileId: input.profileId,
+						name: `${babyNumberPrefix} ${parentA.name} + ${parentB.name}`,
+						species: getBabySpecies(parentA, parentB),
+						gender: 'unknown',
+						wasWild: false,
+						tags: getBabyTags(parentA, parentB, specialBreedApplied ? themeTags : []),
+						breedCount: 0,
+						photoId: null,
+						notes: `Bred from ${parentA.name} + ${parentB.name}${specialBreedApplied ? ' using Special Breed' : ''}.`,
+						createdAt: nowIso(),
+						updatedAt: nowIso(),
+					}
+					await this.db.pets.add(babyPet)
+					babyPets.push(babyPet)
 
-				const breedingEvent = createBreedingEvent({
-					profileId: input.profileId,
-					parentAId: parentA.id,
-					parentBId: parentB.id,
-					babyPetId: babyPet.id,
-					usedBreedingSessionItem,
-				})
-				await this.db.breedingEvents.add(breedingEvent)
+					const event = createBreedingEvent({
+						profileId: input.profileId,
+						parentAId: parentA.id,
+						parentBId: parentB.id,
+						babyPetId: babyPet.id,
+						usedExtraBreedCard: extraBreedCardUsed,
+					})
+					await this.db.breedingEvents.add(event)
+					breedingEvents.push(event)
+				}
 
 				const transactionLog = createTransaction({
 					profileId: input.profileId,
-					deltaPetCoins,
-					deltaCoins,
-					notes:
-						deltaPetCoins === 0 && deltaCoins === 0
-							? `Breeding: ${parentA.name} + ${parentB.name} used "${breedingSessionStoreItem.name}" from inventory.`
-							: `Breeding: ${parentA.name} + ${parentB.name} bought and used "${breedingSessionStoreItem.name}".`,
+					deltaCoins: -totalCoinsCost,
+					notes: `Breeding: ${parentA.name} + ${parentB.name}, children: ${input.childCount}, special: ${
+						specialBreedApplied ? 'yes' : 'no'
+					}, extra-card: ${extraBreedCardUsed ? 'yes' : 'no'}, cost: ${totalCoinsCost} Coins.`,
 				})
 				await this.db.transactionLogs.add(transactionLog)
 
 				return {
 					parentA: updatedParentA,
 					parentB: updatedParentB,
-					babyPet,
-					breedingEvent,
+					babyPets,
+					breedingEvents,
 					transactionLog,
 					wallet,
-					usedBreedingSessionItem,
-					purchasedBreedingSession,
-					breedingSessionStoreItem,
+					childCount: input.childCount,
+					totalCoinsCost,
+					specialBreedApplied,
+					extraBreedCardRequired,
+					extraBreedCardUsed,
 				}
 			},
 		)

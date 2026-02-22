@@ -4,7 +4,7 @@ test.describe('App shell', () => {
 	test('renders core tabs and switches to Store', async ({ page }) => {
 		await page.goto('/')
 
-		await expect(page.getByRole('heading', { level: 1, name: 'Pet Breeder Cards' })).toBeVisible()
+		await expect(page.getByRole('heading', { level: 1, name: 'The Pet Game' })).toBeVisible()
 		await expect(page.getByRole('button', { name: 'Pets' })).toBeVisible()
 		await expect(page.getByRole('button', { name: 'Breed' })).toBeVisible()
 		await expect(page.getByRole('button', { name: 'Store' })).toBeVisible()

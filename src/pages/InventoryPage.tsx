@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ImageInfoCard } from '../components/ImageInfoCard'
 import { TagList } from '../components/TagList'
 import { useActiveProfile } from '../context/useActiveProfile'
@@ -36,9 +36,6 @@ export const InventoryPage = () => {
 	const [tagFilter, setTagFilter] = useState('')
 	const [isLoadingData, setIsLoadingData] = useState(false)
 	const [isAdjustingItemId, setIsAdjustingItemId] = useState<string | null>(null)
-	const [walletPetCoinsDelta, setWalletPetCoinsDelta] = useState('0')
-	const [walletCoinsDelta, setWalletCoinsDelta] = useState('0')
-	const [walletNote, setWalletNote] = useState('')
 	const [recentLogs, setRecentLogs] = useState<
 		{
 			id: string
@@ -240,52 +237,6 @@ export const InventoryPage = () => {
 		}
 	}
 
-	const handleAdjustWallet = async (event: FormEvent<HTMLFormElement>) => {
-		event.preventDefault()
-		if (!activeProfileId) {
-			return
-		}
-
-		const deltaPetCoins = Number.parseInt(walletPetCoinsDelta, 10)
-		const deltaCoins = Number.parseInt(walletCoinsDelta, 10)
-		if (Number.isNaN(deltaPetCoins) || Number.isNaN(deltaCoins)) {
-			setErrorMessage('Wallet adjustments must be whole numbers.')
-			setStatusMessage(null)
-			return
-		}
-
-		try {
-			const result = await economyService.adjustWallet({
-				profileId: activeProfileId,
-				deltaPetCoins,
-				deltaCoins,
-				notes: walletNote,
-			})
-			setWallet(result.wallet)
-			setStatusMessage('Wallet adjusted and logged.')
-			setErrorMessage(null)
-			setWalletPetCoinsDelta('0')
-			setWalletCoinsDelta('0')
-			setWalletNote('')
-		} catch (error: unknown) {
-			if (error instanceof EconomyError) {
-				setErrorMessage(error.message)
-			} else {
-				logAppError('InventoryPage.handleAdjustWallet', error, {
-					metadata: {
-						activeProfileId: activeProfileId ?? 'none',
-						deltaPetCoins,
-						deltaCoins,
-					},
-				})
-				setErrorMessage('Failed to adjust wallet.')
-			}
-			setStatusMessage(null)
-		} finally {
-			void loadData()
-		}
-	}
-
 	return (
 		<section className="panel">
 			<h2>Inventory</h2>
@@ -299,43 +250,6 @@ export const InventoryPage = () => {
 					<strong>Coins:</strong> {wallet?.coins ?? 0}
 				</p>
 			</div>
-
-			<form className="inventory-wallet-form" onSubmit={handleAdjustWallet}>
-				<h3>Parent Wallet Adjustment</h3>
-				<div className="inventory-filter-grid">
-					<label className="inventory-field">
-						<span>PetCoins Change (+/-)</span>
-						<input
-							type="number"
-							value={walletPetCoinsDelta}
-							onChange={(event) => setWalletPetCoinsDelta(event.target.value)}
-							aria-label="PetCoins change"
-						/>
-					</label>
-					<label className="inventory-field">
-						<span>Coins Change (+/-)</span>
-						<input
-							type="number"
-							value={walletCoinsDelta}
-							onChange={(event) => setWalletCoinsDelta(event.target.value)}
-							aria-label="Coins change"
-						/>
-					</label>
-					<label className="inventory-field inventory-field-wide">
-						<span>Reason</span>
-						<input
-							type="text"
-							value={walletNote}
-							onChange={(event) => setWalletNote(event.target.value)}
-							placeholder="Reason for adjustment"
-							aria-label="Wallet adjustment reason"
-						/>
-					</label>
-				</div>
-				<button type="submit" disabled={!walletNote.trim()}>
-					Apply Wallet Adjustment
-				</button>
-			</form>
 
 			<div className="inventory-filter-grid">
 				<label className="inventory-field">

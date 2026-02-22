@@ -7,7 +7,7 @@ describe('App shell', () => {
 	it('renders the app title and all primary tabs', async () => {
 		render(<App />)
 
-		expect(screen.getByRole('heading', { level: 1, name: 'Pet Breeder Cards' })).toBeInTheDocument()
+		expect(screen.getByRole('heading', { level: 1, name: 'The Pet Game' })).toBeInTheDocument()
 		expect(screen.getByRole('button', { name: 'Pets' })).toBeInTheDocument()
 		expect(screen.getByRole('button', { name: 'Breed' })).toBeInTheDocument()
 		expect(screen.getByRole('button', { name: 'Store' })).toBeInTheDocument()
@@ -34,7 +34,7 @@ describe('App shell', () => {
 		await user.click(screen.getByRole('button', { name: 'Store' }))
 
 		expect(screen.getByRole('heading', { level: 2, name: 'Store' })).toBeInTheDocument()
-		expect(screen.getByText('Browse and buy pets, supplies, and session tokens.')).toBeInTheDocument()
+		expect(screen.getByText('Browse and buy pets, supplies, and Breeding Cards.')).toBeInTheDocument()
 		expect(window.location.hash).toBe('#/store')
 	})
 })

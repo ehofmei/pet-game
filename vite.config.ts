@@ -37,10 +37,13 @@ export default defineConfig({
 		VitePWA({
 			registerType: 'autoUpdate',
 			includeAssets: ['apple-touch-icon.png'],
+			workbox: {
+				globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+			},
 			manifest: {
-				name: 'Pet Breeder Cards',
-				short_name: 'Pet Cards',
-				description: 'Offline-first pet breeding card tracker',
+				name: 'The Pet Game',
+				short_name: 'The Pet Game',
+				description: 'Offline-first pet card game tracker',
 				theme_color: '#1f6ea3',
 				background_color: '#f7fbff',
 				display: 'standalone',
